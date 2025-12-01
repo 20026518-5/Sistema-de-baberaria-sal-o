@@ -1019,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const init = async () => { 
         try { 
-            // Autenticação anônima para carregar dados públicos
+            // Tenta logar anonimamente
             await signInAnonymously(auth);
             
             onAuthStateChanged(auth, (user) => { 
@@ -1031,8 +1031,44 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showView('client'); 
         } catch (err) { 
-            console.error("Auth Error Crítico", err); 
-            document.body.innerHTML = `<div class="flex items-center justify-center h-screen bg-slate-900 text-white p-4 text-center"><div><i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i><h2 class="text-xl font-bold">Erro de Conexão</h2><p class="text-slate-400 mt-2 text-sm">${err.message}</p></div></div>`;
+            console.error("Erro Firebase:", err);
+            let errorMsg = "Erro de conexão com o banco de dados.";
+            let helpTip = "Verifique sua conexão.";
+
+            // Tratamento específico para o erro reportado
+            if (err.code === 'auth/configuration-not-found' || err.code === 'auth/admin-restricted-operation') {
+                errorMsg = "Configuração do Firebase Pendente";
+                helpTip = "O método de Login Anônimo (Anonymous) não está ativado no Firebase Console deste projeto.";
+            }
+
+            document.body.innerHTML = `
+            <div class="flex items-center justify-center h-screen bg-slate-900 text-white p-4">
+                <div class="max-w-md w-full bg-slate-800 rounded-xl border border-slate-700 p-8 text-center shadow-2xl">
+                    <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">${errorMsg}</h2>
+                    <p class="text-slate-400 mb-6">${helpTip}</p>
+                    
+                    <div class="text-left bg-slate-900 rounded p-4 text-xs font-mono text-slate-500 overflow-x-auto mb-6">
+                        ${err.message}
+                    </div>
+
+                    <div class="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4 text-left">
+                        <p class="text-blue-400 font-bold text-sm mb-2"><i class="fas fa-info-circle mr-2"></i>Como resolver:</p>
+                        <ol class="list-decimal list-inside text-slate-300 text-sm space-y-2">
+                            <li>Acesse o <a href="https://console.firebase.google.com/" target="_blank" class="text-blue-400 underline">Firebase Console</a>.</li>
+                            <li>Vá em <b>Authentication</b> > <b>Sign-in method</b>.</li>
+                            <li>Ative o provedor <b>Anonymous</b> (Anônimo).</li>
+                            <li>Vá em <b>Settings</b> > <b>Authorized domains</b> e adicione este domínio.</li>
+                        </ol>
+                    </div>
+                    
+                    <button onclick="location.reload()" class="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition-colors">
+                        Tentar Novamente
+                    </button>
+                </div>
+            </div>`;
         } 
     };
     init();
